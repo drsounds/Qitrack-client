@@ -10,6 +10,9 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.PlusClient;
 
 
@@ -74,9 +77,12 @@ public abstract class PlusBaseActivity extends Activity
 
         // Initialize the PlusClient connection.
         // Scopes indicate the information about the user your application will be able to access.
-        mPlusClient =
-                new PlusClient.Builder(this, this, this).setScopes(Scopes.PLUS_LOGIN,
-                        Scopes.PLUS_ME).build();
+        mPlusClient = (PlusClient) new GoogleApiClient.Builder(this)
+                .addApi(Drive.API)
+                .addScope(Drive.SCOPE_FILE)
+                .addApi(Plus.API, null)
+                .addScope(Plus.SCOPE_PLUS_LOGIN)
+                .build();
     }
 
     /**
