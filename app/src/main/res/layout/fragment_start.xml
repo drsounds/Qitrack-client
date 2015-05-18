@@ -1,0 +1,16 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" tools:context="io.webconnector.qitrack.StartFragment">
+<LinearLayout  android:layout_width="match_parent"
+    android:layout_height="match_parent" android:padding="50dp"  android:orientation="vertical">
+
+    <!-- TODO: Update blank fragment layout -->
+    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
+        android:text="@string/accounts"
+        />
+    <ListView android:id="@+id/lvAccounts" android:layout_width="match_parent" android:layout_height="wrap_content">
+
+    </ListView>
+
+</LinearLayout>
+</ScrollView>
