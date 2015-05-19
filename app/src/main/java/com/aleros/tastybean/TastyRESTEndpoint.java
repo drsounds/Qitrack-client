@@ -1,5 +1,10 @@
 package com.aleros.tastybean;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +24,9 @@ import org.json.JSONObject;
 
 public class TastyRESTEndpoint extends TastyEndpoint {
 	
-	
+    public boolean isLoggedIn() {
+        return this.getAccessToken() != null && this.getAccessToken().isValid();
+    }
 	
 	public TastyUser me() throws ClientProtocolException, IOException, JSONException {
 		String result = "";
@@ -39,8 +46,8 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 	}
 	public TastyAccessToken login(String username, String password, String scope) throws ClientProtocolException, IOException {
 		String result = "";
-		String url = this.getEndpoint().replace("/api", "") + "/oauth2/access_token";
-		
+		String url = this.getEndpoint().replace("/api", "") + "/oauth/access_token";
+
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -55,6 +62,7 @@ public class TastyRESTEndpoint extends TastyEndpoint {
         if(inputStream != null)
             result = convertInputStreamToString(inputStream);
         try {
+            Log.e("A", result);
         	JSONObject obj = new JSONObject(result);
         	TastyAccessToken accessToken = new TastyAccessToken(obj);
         	this.setAccessToken(accessToken);
@@ -63,6 +71,34 @@ public class TastyRESTEndpoint extends TastyEndpoint {
         	return null;
         }
 	}
+
+    public TastyAccessToken refreshToken() throws ClientProtocolException, IOException {
+        String result = "";
+        String url = this.getEndpoint().replace("/api", "") + "/oauth/access_token";
+
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        String data = "grant_type=refresh_token&refresh_token=" + this.getAccessToken().getRefreshToken();
+        StringEntity se = new StringEntity(data);
+        httpPost.setEntity(se);
+
+        HttpResponse httpResponse = httpClient.execute(httpPost);
+
+        InputStream inputStream = httpResponse.getEntity().getContent();
+
+        if(inputStream != null)
+            result = convertInputStreamToString(inputStream);
+        try {
+            JSONObject obj = new JSONObject(result);
+            TastyAccessToken accessToken = new TastyAccessToken(obj);
+            this.setAccessToken(accessToken);
+            return accessToken;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 	private TastyAccessToken accessToken;
 	
 	/**
@@ -71,12 +107,15 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 	 * @param appSecret
 	 * @param endpoint
 	 */
-	public TastyRESTEndpoint(String version, String appId, String appSecret, String endpoint) {
-		super(version, appId, appSecret, endpoint);
+	public TastyRESTEndpoint(Context context, String version, String appId, String appSecret, String endpoint) {
+		super(context, version, appId, appSecret, endpoint);
 	}
 	
 	public String getUrl(String resource, String id) {
-		String url = this.getEndpoint() + "/" + this.getVersion() + "/" + resource + "/" + (id != null ? id + "/" : "") + "?format=json&username=" + this.getAppId() + "&api_key=" + this.getAppSecret();
+		String url = this.getEndpoint() + "/" + this.getVersion() + "/" + resource + "/" + (id != null ? id + "/" : "") + "?format=json";
+        if (getAccessToken() != null) {
+            url += "&oauth_consumer_key=" + getAccessToken().getAccessToken();
+        }
 		return url;
 	}
 	
@@ -100,6 +139,9 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 		httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
         if (getAccessToken() != null) {
+            if (!getAccessToken().isValid()) {
+                refreshToken();
+            }
 			httpPost.setHeader("Authorization", "OAuth " + getAccessToken().getAccessToken());
 			
 		} else {
@@ -128,6 +170,9 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 		httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
         if (getAccessToken() != null) {
+            if (!getAccessToken().isValid()) {
+                refreshToken();
+            }
 			httpPost.setHeader("Authorization", "OAuth " + getAccessToken().getAccessToken());
 			
 		}
@@ -142,6 +187,8 @@ public class TastyRESTEndpoint extends TastyEndpoint {
         TastyResult resultObject = new TastyResult(new JSONObject(result));
         return resultObject;
 	}
+
+
 	
 	public TastyResult get(String resource, String id, String query) throws ClientProtocolException, IOException, JSONException {
 		String result = "";
@@ -150,6 +197,9 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 		HttpGet httpGet = new HttpGet(url);
 		
 		if (getAccessToken() != null) {
+            if (!getAccessToken().isValid()) {
+                refreshToken();
+            }
 			httpGet.setHeader("Authorization", "OAuth " + getAccessToken().getAccessToken());
 		}
 		
@@ -159,12 +209,37 @@ public class TastyRESTEndpoint extends TastyEndpoint {
 
         if(inputStream != null)
             result = convertInputStreamToString(inputStream);
-        
+
+        Log.e("A", result);
         TastyResult resultObject = new TastyResult(new JSONObject(result));
         return resultObject;
 	}
-	
-	public TastyResult delete(String resource, TastyObject object) throws ClientProtocolException, IOException, JSONException {
+    public TastyObject getSingle(String resource, String id, String query) throws ClientProtocolException, IOException, JSONException {
+        String result = "";
+        String url = this.getUrl(resource, id);
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpGet httpGet = new HttpGet(url);
+
+        if (getAccessToken() != null) {
+            if (!getAccessToken().isValid()) {
+                refreshToken();
+            }
+            httpGet.setHeader("Authorization", "OAuth " + getAccessToken().getAccessToken());
+        }
+
+        HttpResponse httpResponse = httpClient.execute(httpGet);
+
+        InputStream inputStream = httpResponse.getEntity().getContent();
+
+        if(inputStream != null)
+            result = convertInputStreamToString(inputStream);
+
+        Log.e("A", result);
+        TastyObject resultObject = new TastyObject(new JSONObject(result));
+        return resultObject;
+    }
+
+    public TastyResult delete(String resource, TastyObject object) throws ClientProtocolException, IOException, JSONException {
 		String result = "";
 
 		String url = this.getUrl(resource, (String)object.get("id"));
@@ -179,7 +254,7 @@ public class TastyRESTEndpoint extends TastyEndpoint {
         TastyResult resultObject = new TastyResult(new JSONObject(result));
         return resultObject;
 	}
-	
+
 	/**
 	 * @from http://www.mkyong.com/java/how-to-convert-inputstream-to-string-in-java/
 	 * @param is
@@ -214,9 +289,22 @@ public class TastyRESTEndpoint extends TastyEndpoint {
  
 	}
 	public TastyAccessToken getAccessToken() {
-		return accessToken;
+        SharedPreferences prefs = (SharedPreferences)PreferenceManager.getDefaultSharedPreferences(getContext());
+        TastyAccessToken accessToken = null;
+        try {
+            accessToken = new TastyAccessToken(new JSONObject(prefs.getString("access_token", null)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return accessToken;
 	}
+
 	public void setAccessToken(TastyAccessToken accessToken) {
-		this.accessToken = accessToken;
-	}
+        JSONObject json = accessToken.toJsonObject();
+        SharedPreferences prefs = (SharedPreferences)PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("access_token", json.toString());
+        editor.apply();
+
+    }
 }

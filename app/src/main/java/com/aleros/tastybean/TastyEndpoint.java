@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.http.client.ClientProtocolException;
 import org.json.JSONException;
 
+import android.content.Context;
 import android.os.AsyncTask;
 
 /***
@@ -17,6 +18,11 @@ public abstract class TastyEndpoint {
 	private String appSecret;
 	private String endpoint;
 	private String version;
+    private Context context;
+    public abstract boolean isLoggedIn();
+    public Context getContext() {
+        return context;
+    }
 	public abstract TastyUser me() throws ClientProtocolException, IOException, JSONException;
 	
 	public abstract TastyAccessToken login(String username, String password, String scope) throws ClientProtocolException, IOException;
@@ -58,7 +64,8 @@ public abstract class TastyEndpoint {
 		};
 		process.execute();
 	}
-	public TastyEndpoint(String version, String appId, String appSecret, String endpoint) {
+	public TastyEndpoint(Context context, String version, String appId, String appSecret, String endpoint) {
+        this.context = context;
 		this.setAppId(appId);
 		this.setAppSecret(appSecret);
 		this.setEndpoint(endpoint);
@@ -68,8 +75,9 @@ public abstract class TastyEndpoint {
 	public abstract TastyObject post(String resource, TastyObject object) throws ClientProtocolException, IOException, JSONException;
 	public abstract TastyResult put(String resource, TastyObject object) throws ClientProtocolException, IOException, JSONException;
 	public abstract TastyResult get(String resource, String id, String query) throws ClientProtocolException, IOException, JSONException;
+    public abstract TastyObject getSingle(String resource, String id, String query) throws ClientProtocolException, IOException, JSONException;
 
-	public String getEndpoint() {
+    public String getEndpoint() {
 		return endpoint;
 	}
 

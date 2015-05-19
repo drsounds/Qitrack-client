@@ -1,16 +1,18 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" tools:context="io.webconnector.qitrack.StartFragment">
-<LinearLayout  android:layout_width="match_parent"
+   android:fillViewport="true" android:layout_height="match_parent" tools:context="io.webconnector.qitrack.StartFragment">
+<RelativeLayout android:layout_width="match_parent"
     android:layout_height="match_parent" android:padding="50dp"  android:orientation="vertical">
-
+    <LinearLayout  android:layout_width="match_parent"
+        android:layout_height="match_parent"  android:orientation="vertical">
     <!-- TODO: Update blank fragment layout -->
-    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="@string/accounts"
         />
-    <ListView android:id="@+id/lvAccounts" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <ListView  android:id="@+id/lvAccounts" android:layout_weight="1" android:layout_width="match_parent" android:layout_height="wrap_content">
 
     </ListView>
+    </LinearLayout>
+</RelativeLayout>
 
-</LinearLayout>
 </ScrollView>

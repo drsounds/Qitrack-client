@@ -92,6 +92,7 @@ public class AccountFragment extends Fragment implements AbsListView.OnItemClick
                 }
                 TastyObject object = this.getItem(position);
                 ((TextView)v.findViewById(R.id.tv_account)).setText(object.get("name").toString());
+
                 return v;
             }
         };

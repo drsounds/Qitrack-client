@@ -1,12 +1,29 @@
 package io.webconnector.qitrack;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.aleros.tastybean.FindCallback;
+import com.aleros.tastybean.TastyException;
+import com.aleros.tastybean.TastyObject;
+import com.aleros.tastybean.TastyQuery;
+import com.aleros.tastybean.TastyResult;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.NumberFormat;
+import java.util.ArrayList;
 
 
 /**
@@ -28,7 +45,8 @@ public class StartFragment extends Fragment {
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
-
+    private ArrayAdapter<TastyObject> mAdapter;
+    public ArrayList<TastyObject> accounts = new ArrayList<TastyObject>();
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -54,17 +72,63 @@ public class StartFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+        // TODO: Change Adapter to display your content
+        mAdapter = new ArrayAdapter<TastyObject>(getActivity(),
+                R.layout.item_account, android.R.id.text1, accounts)
+        {
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = convertView;
+                if (v == null) {
+                    LayoutInflater inflater = getActivity().getLayoutInflater();
+                    v = inflater.inflate(R.layout.item_account, null);
+                }
+                TastyObject object = this.getItem(position);
+                ((TextView)v.findViewById(R.id.tv_account)).setText(object.get("name").toString());
+                NumberFormat numberFormat = NumberFormat.getInstance();
+                TextView tvAmount = ((TextView) v.findViewById(R.id.tv_amount));
+                tvAmount.setText(numberFormat.format(Float.valueOf(object.get("balance").toString())));
+                return v;
+            }
+        };
+
+        TastyQuery query = new TastyQuery("me/accounts");
+        query.getNextBackground(new FindCallback() {
+            @Override
+            public void done(TastyResult result, TastyException e) {
+                if (result != null)
+                accounts.addAll(result.objects());
+                mAdapter.notifyDataSetChanged();
+            }
+        });
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_start, container, false);
+        View v = inflater.inflate(R.layout.fragment_start, container, false);
+
+        ListView lvAccounts = (ListView)v.findViewById(R.id.lvAccounts);
+        lvAccounts.setAdapter(mAdapter);
+        lvAccounts.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TastyObject object = (TastyObject) parent.getItemAtPosition(position);
+                try {
+                    String account_id = object.get("id").toString();
+                    Intent i = new Intent(getActivity(), AccountActivity.class);
+                    i.putExtra("id", account_id);
+                    startActivity(i);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+        return v;
     }
 
     // TODO: Rename method, update argument and hook method into UI event

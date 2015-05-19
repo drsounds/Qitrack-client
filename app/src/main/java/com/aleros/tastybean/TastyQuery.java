@@ -97,6 +97,13 @@ public class TastyQuery extends Hashtable<String, String> {
 		this.page++;
 		return result;
 	}
+    public TastyObject getSingle() throws JSONException, IOException {
+        TastyResult result = this.query();
+        if (result.objects().size() > 0) {
+            return result.objects().get(0);
+        }
+        return null;
+    }
 	
 	public void getNextBackground(final FindCallback callback) {
 		String query = "";
@@ -119,7 +126,7 @@ public class TastyQuery extends Hashtable<String, String> {
 				} catch (ClientProtocolException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} catch (IOException e) {
+				    } catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (JSONException e) {
@@ -139,6 +146,48 @@ public class TastyQuery extends Hashtable<String, String> {
 		};
 		task.execute();
 	}
+
+    public void getSingleBackground(final GetCallback callback) {
+        String query = "";
+        while(this.keys().hasMoreElements()) {
+            String key= this.keys().nextElement();
+            String value = String.valueOf(this.get(key));
+            query += key + "=" + URLEncoder.encode(value) + "&";
+
+        }
+        query += "p=" + String.valueOf(page);
+        final String query2 = query;
+        AsyncTask<String, String, TastyObject> task = new AsyncTask<String, String, TastyObject>() {
+
+            @Override
+            protected TastyObject doInBackground(String... params) {
+                // TODO Auto-generated method stub
+                try {
+                    TastyObject result = endpoint.getSingle(TastyQuery.this.getResource(), TastyQuery.this.getId(), TastyQuery.this.getResource());
+                    return result;
+                } catch (ClientProtocolException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(TastyObject result) {
+                // TODO Auto-generated method stub
+                callback.done(result, null);
+                super.onPostExecute(result);
+            }
+
+        };
+        task.execute();
+    }
 	
 	public void whereEqualTo(String key, String val) {
 		this.put(key, val);

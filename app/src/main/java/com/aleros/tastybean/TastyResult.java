@@ -25,4 +25,9 @@ public class TastyResult extends TastyObject {
 	public List<TastyObject> objects() {
 		return (List<TastyObject>) this.get("objects");
 	}
+    private TastyObject single;
+    public TastyObject getSingle() {
+        return this.getSingle();
+
+    }
 }
